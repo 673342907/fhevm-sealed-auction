@@ -80,6 +80,11 @@ export const zh = {
     ready: '已就绪',
     initializing: '初始化中...',
     connectDesc: '请连接 MetaMask 钱包以开始使用',
+    notInstalled: '请安装 MetaMask 钱包',
+    userRejected: '用户拒绝了连接',
+    connectFailed: '钱包连接失败',
+    walletConnected: '钱包已连接',
+    walletDisconnected: '钱包已断开',
   },
 
   // 引导

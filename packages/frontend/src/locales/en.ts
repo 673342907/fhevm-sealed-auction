@@ -80,6 +80,11 @@ export const en = {
     ready: 'Ready',
     initializing: 'Initializing...',
     connectDesc: 'Please connect MetaMask wallet to get started',
+    notInstalled: 'Please install MetaMask wallet',
+    userRejected: 'User rejected connection',
+    connectFailed: 'Wallet connection failed',
+    walletConnected: 'Wallet connected',
+    walletDisconnected: 'Wallet disconnected',
   },
 
   // Onboarding
