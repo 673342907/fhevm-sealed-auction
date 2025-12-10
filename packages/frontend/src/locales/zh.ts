@@ -191,7 +191,6 @@ export const zh = {
   notification: {
     walletConnected: '钱包已连接',
     walletDisconnected: '钱包已断开',
-    walletConnected: '钱包已连接',
     notInstalled: '请安装 MetaMask 钱包',
     userRejected: '用户拒绝了连接请求',
     connectFailed: '连接钱包失败',
