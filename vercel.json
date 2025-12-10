@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd packages/frontend && npm install --legacy-peer-deps && npm run build",
+  "buildCommand": "npm install --legacy-peer-deps --prefix packages/frontend && npm run build --prefix packages/frontend",
   "outputDirectory": "packages/frontend/.next",
-  "installCommand": "cd packages/frontend && npm install --legacy-peer-deps",
+  "installCommand": "npm install --legacy-peer-deps --prefix packages/frontend",
   "framework": "nextjs"
 }
 
