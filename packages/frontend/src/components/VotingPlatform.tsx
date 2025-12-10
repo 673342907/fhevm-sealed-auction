@@ -691,8 +691,8 @@ function ProposalCard({
             encryptedVoteStrings.push(String.fromCharCode(...encryptedBytes));
           } else if (encryptedBytes && typeof encryptedBytes === 'object' && 'length' in encryptedBytes) {
             // 如果是类数组对象，尝试转换
-            const arr = Array.from(encryptedBytes as any);
-            encryptedVoteStrings.push(String.fromCharCode(...arr));
+            const arr = Array.from(encryptedBytes as any).map((v: unknown) => Number(v) || 0);
+            encryptedVoteStrings.push(String.fromCharCode(...(arr as number[])));
           } else {
             // 尝试使用 ethers 的 hexlify 转换
             try {
