@@ -10,12 +10,13 @@ export function useWallet() {
   const [error, setError] = useState<string | null>(null);
 
   const checkConnection = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.ethereum) {
+    const ethereum = typeof window === 'undefined' ? undefined : (window as any).ethereum;
+    if (!ethereum) {
       return;
     }
 
     try {
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(ethereum);
       const accounts = await provider.listAccounts();
       if (accounts.length > 0) {
         setAccount(accounts[0].address);
@@ -29,7 +30,8 @@ export function useWallet() {
   }, []);
 
   const connect = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.ethereum) {
+    const ethereum = typeof window === 'undefined' ? undefined : (window as any).ethereum;
+    if (!ethereum) {
       setError('请安装 MetaMask 钱包');
       return false;
     }
@@ -38,7 +40,7 @@ export function useWallet() {
     setError(null);
 
     try {
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = new BrowserProvider(ethereum);
       await provider.send('eth_requestAccounts', []);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
@@ -62,7 +64,8 @@ export function useWallet() {
     checkConnection();
 
     // 监听账户变化
-    if (window.ethereum) {
+    const ethereum = (window as any)?.ethereum;
+    if (ethereum) {
       const handleAccountsChanged = (accounts: string[]) => {
         if (accounts.length === 0) {
           setAccount(null);
@@ -77,12 +80,12 @@ export function useWallet() {
         window.location.reload();
       };
 
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
+      ethereum.on('accountsChanged', handleAccountsChanged);
+      ethereum.on('chainChanged', handleChainChanged);
 
       return () => {
-        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum?.removeListener('chainChanged', handleChainChanged);
+        ethereum?.removeListener('accountsChanged', handleAccountsChanged);
+        ethereum?.removeListener('chainChanged', handleChainChanged);
       };
     }
   }, [checkConnection]);
