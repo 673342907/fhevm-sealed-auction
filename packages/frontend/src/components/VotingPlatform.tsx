@@ -22,7 +22,7 @@ interface Proposal {
   description: string;
   endTime: bigint;
   voteCount: bigint;
-  status: number; // 0=进行中, 1=已结束, 2=已结算
+  status: number; // 0=Active, 1=Ended, 2=Finalized
   finalized: boolean;
   totalWeight: bigint;
 }
@@ -36,18 +36,18 @@ interface Vote {
 }
 
 /**
- * 投票平台主组件
+ * Voting Platform Main Component
  * 
- * 功能：
- * - 创建提案（一键创建）
- * - 加密投票（一键投票）
- * - 实时统计（自动显示）
- * - 结果揭示（自动解密）
+ * Features:
+ * - Create proposals (one-click creation)
+ * - Encrypted voting (one-click voting)
+ * - Real-time statistics (auto display)
+ * - Result revelation (auto decryption)
  * 
- * 操作简化：
- * - 创建提案：填写标题和描述 → 点击创建
- * - 投票：选择选项 → 点击投票
- * - 查看结果：自动显示
+ * Simplified operations:
+ * - Create proposal: Fill title and description → Click create
+ * - Vote: Select option → Click vote
+ * - View results: Auto display
  */
 export default function VotingPlatform({
   provider,
@@ -60,13 +60,14 @@ export default function VotingPlatform({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [proposalTitle, setProposalTitle] = useState('');
   const [proposalDescription, setProposalDescription] = useState('');
-  const [votingDuration, setVotingDuration] = useState('86400'); // 默认1天
+  const [votingDuration, setVotingDuration] = useState('86400'); // Default 1 day
   const [useWeighted, setUseWeighted] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   
+  const createTransaction = useTransaction();
   const endProposalTransaction = useTransaction();
 
-  // 预设提案模板 - 根据语言动态生成
+  // Preset proposal templates - dynamically generated based on language
   const proposalTemplates = language === 'zh' ? [
     {
       title: '是否支持项目升级到 v2.0？',
@@ -175,11 +176,11 @@ export default function VotingPlatform({
     try {
       const contract = getVotingContract(contractAddress, provider);
       
-      // 获取提案数量，增加超时时间到60秒
+      // Get proposal count, increase timeout to 60 seconds
       let counter: bigint;
       try {
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout')), 60000); // 60秒超时
+          setTimeout(() => reject(new Error('Request timeout')), 60000); // 60 second timeout
         });
         counter = await Promise.race([contract.proposalCounter(), timeoutPromise]) as bigint;
       } catch (error: any) {
@@ -198,7 +199,7 @@ export default function VotingPlatform({
         return;
       }
       
-      // 加载提案列表，每个提案15秒超时
+      // Load proposal list, 15 second timeout per proposal
       proposalList = [];
       const loadPromises: Promise<void>[] = [];
       
@@ -228,14 +229,14 @@ export default function VotingPlatform({
             });
           } catch (error) {
             console.error(`Error loading proposal ${i}:`, error);
-            // 继续加载其他提案，不中断整个流程
+            // Continue loading other proposals, don't interrupt the entire process
           }
         })();
         
         loadPromises.push(loadPromise);
       }
       
-      // 等待所有提案加载完成，最多等待90秒
+      // Wait for all proposals to load, maximum 90 seconds
       try {
         await Promise.race([
           Promise.all(loadPromises),
@@ -244,7 +245,7 @@ export default function VotingPlatform({
           })
         ]);
       } catch (error: any) {
-        // 即使超时，也使用已加载的提案
+        // Even if timeout, use loaded proposals
         console.warn('Some proposals may not have loaded:', error);
         if (proposalList.length === 0) {
           hasError = true;
@@ -252,17 +253,17 @@ export default function VotingPlatform({
         }
       }
       
-      // 按ID排序，确保顺序正确
+      // Sort by ID to ensure correct order
       proposalList.sort((a, b) => a.id - b.id);
       
       setProposals(proposalList);
       console.log(`Successfully loaded ${proposalList.length} out of ${count} proposals`);
       
-      // 如果加载了部分提案，显示警告而不是错误
+      // If partially loaded proposals, show warning instead of error
       if (proposalList.length < count && proposalList.length > 0) {
         showNotification('warning', `Loaded ${proposalList.length} out of ${count} proposals. Some proposals may be missing.`);
       } else if (proposalList.length === 0 && count > 0) {
-        // 只有在完全失败时才显示错误
+        // Only show error if completely failed
         hasError = true;
         errorMessage = 'Failed to load any proposals';
       }
@@ -274,7 +275,7 @@ export default function VotingPlatform({
     } finally {
       setLoading(false);
       
-      // 只有在真正失败且没有加载任何提案时才显示错误
+      // Only show error if truly failed and no proposals loaded
       if (hasError && proposalList.length === 0) {
         if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
           showNotification('error', 'Request timeout. Please check your network connection and try again.');
@@ -297,7 +298,7 @@ export default function VotingPlatform({
       const signer = await provider.getSigner();
       const contract = getVotingContract(contractAddress, signer);
       
-      const options = [t.voting.support, t.voting.oppose]; // 默认两个选项
+      const options = [t.voting.support, t.voting.oppose]; // Default two options
       const duration = parseInt(votingDuration);
 
       const result = await createTransaction.execute(
@@ -314,17 +315,17 @@ export default function VotingPlatform({
         showNotification('success', t.voting.createSuccess);
         setProposalTitle('');
         setProposalDescription('');
-        setVotingDuration('86400'); // 重置为默认值
+        setVotingDuration('86400'); // Reset to default value
         setUseWeighted(false);
         setSelectedTemplate(null);
         setShowCreateForm(false);
         await loadProposals();
       } else {
-        showNotification('error', result.error || '创建提案失败');
+        showNotification('error', result.error || t.voting.createFailed);
       }
     } catch (error: any) {
-      console.error('创建提案失败:', error);
-      showNotification('error', error.message || '创建提案失败');
+      console.error('Create proposal failed:', error);
+      showNotification('error', error.message || t.voting.createFailed);
     }
   };
 
@@ -332,7 +333,7 @@ export default function VotingPlatform({
     if (!provider || !contractAddress) return;
 
     try {
-      // 加密投票选项（0=支持, 1=反对）
+      // Encrypted vote options (0=Support, 1=Against)
       const encryptedVote = await encryptValue(contractAddress, account, optionIndex);
       const signer = await provider.getSigner();
       const contract = getVotingContract(contractAddress, signer);
@@ -350,18 +351,18 @@ export default function VotingPlatform({
         showNotification('success', t.voting.voteSuccess);
         await loadProposals();
       } else {
-        showNotification('error', result.error || '投票失败');
+        showNotification('error', result.error || t.voting.voteFailed);
       }
     } catch (error: any) {
-      console.error('投票失败:', error);
-      showNotification('error', error.message || '投票失败');
+      console.error('Vote failed:', error);
+      showNotification('error', error.message || t.voting.voteFailed);
     }
   };
 
   const handleEndProposalEarly = async (proposalId: number) => {
     if (!provider || !contractAddress) return;
 
-    // 确认对话框
+    // Confirmation dialog
     if (!confirm(t.voting.endEarlyConfirm)) {
       return;
     }
@@ -378,13 +379,13 @@ export default function VotingPlatform({
         showNotification('success', t.voting.endSuccess);
         await loadProposals();
       } else {
-        showNotification('error', result.error || '提前结束提案失败');
+        showNotification('error', result.error || t.voting.endFailed);
       }
     } catch (error: any) {
-      console.error('提前结束提案失败:', error);
-      const errorMessage = error.message || '提前结束提案失败';
+      console.error('End proposal early failed:', error);
+      const errorMessage = error.message || t.voting.endFailed;
       if (errorMessage.includes('Only creator')) {
-        showNotification('error', '❌ 只有提案创建者可以提前结束提案');
+        showNotification('error', t.voting.endFailed || 'Only proposal creator can end proposal early');
       } else {
         showNotification('error', errorMessage);
       }
@@ -402,7 +403,7 @@ export default function VotingPlatform({
   return (
     <div className="space-y-6">
 
-      {/* 创建提案区域 */}
+      {/* Create proposal area */}
       <div className="bg-black/90 dark:bg-black rounded-xl shadow-lg border-2 border-zama-500/50 dark:border-zama-500/60 p-6 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
@@ -418,7 +419,7 @@ export default function VotingPlatform({
 
         {showCreateForm && (
           <div className="space-y-4 mt-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-            {/* 预设模板选择 */}
+            {/* Preset template selection */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 📋 {t.voting.template}
@@ -522,17 +523,17 @@ export default function VotingPlatform({
               {createTransaction.isPending ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  <span>创建中...</span>
+                  <span>{t.common.loading || 'Creating...'}</span>
                 </>
               ) : (
-                '✅ 创建提案'
+                `✅ ${t.voting.create}`
               )}
             </button>
           </div>
         )}
       </div>
 
-      {/* 提案列表 */}
+      {/* Proposal list */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
@@ -766,9 +767,9 @@ function ProposalCard({
         <div className="flex flex-col items-end gap-2">
           <span className={`px-3 py-1 text-xs rounded font-medium ${
             isActive 
-              ? 'bg-green-100 dark:bg-green-100/20 text-green-700 dark:text-green-200' 
+              ? 'bg-zama-500/20 dark:bg-zama-500/30 text-zama-700 dark:text-zama-300' 
               : isEnded && !isFinalized
-              ? 'bg-amber-100 dark:bg-amber-100/20 text-amber-700 dark:text-amber-200'
+              ? 'bg-zama-500/20 dark:bg-zama-500/30 text-zama-700 dark:text-zama-300'
               : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
           }`}>
             {isActive ? t.voting.active : isEnded && !isFinalized ? t.voting.ended : t.voting.finalized}
@@ -794,13 +795,13 @@ function ProposalCard({
           <div className="flex gap-3">
             <button
               onClick={() => onVote(proposal.id, 0)}
-              className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+              className="flex-1 px-4 py-3 bg-zama-500 text-black rounded-lg font-bold hover:bg-zama-400 transition-all shadow-lg shadow-zama-500/50 flex items-center justify-center gap-2"
             >
               ✅ {t.voting.support}
             </button>
             <button
               onClick={() => onVote(proposal.id, 1)}
-              className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              className="flex-1 px-4 py-3 bg-zinc-700 text-white rounded-lg font-bold hover:bg-zinc-600 transition-all shadow-lg flex items-center justify-center gap-2"
             >
               ❌ {t.voting.oppose}
             </button>
@@ -813,7 +814,7 @@ function ProposalCard({
 
       {/* 已投票提示 */}
       {hasVoted && isActive && (
-        <div className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800">
+        <div className="mt-4 p-4 bg-zama-500/20 dark:bg-zama-500/30 rounded-lg border border-zama-500/40 dark:border-zama-500/50">
           <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100 text-center">
             ✅ {t.voting.voted}
           </p>

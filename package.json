@@ -5,11 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "cd packages/frontend && npm run dev",
-    "build": "cd packages/frontend && npm run build",
+    "build": "cd packages/frontend && npm install && npm run build",
     "start": "cd packages/frontend && npm run start",
     "compile": "cd packages/contracts && npx hardhat compile",
     "test": "cd packages/contracts && npx hardhat test",
-    "deploy:sepolia": "cd packages/contracts && npx hardhat run scripts/deploy.js --network sepolia"
+    "deploy:sepolia": "cd packages/contracts && npx hardhat run scripts/deploy.js --network sepolia",
+    "postinstall": "cd packages/frontend && npm install"
   },
   "keywords": [
     "fhevm",

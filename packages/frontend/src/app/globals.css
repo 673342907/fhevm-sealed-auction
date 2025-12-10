@@ -2,6 +2,158 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom animations for flow demo */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.6), 0 0 60px rgba(245, 158, 11, 0.3);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px) translateX(-10px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes flow-light {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes flow-line {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes flow-gradient {
+  0% {
+    transform: translateX(-100%) translateY(-100%);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%);
+  }
+}
+
+@keyframes shimmer-text {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shimmer-delayed {
+  0% {
+    transform: translateX(-200%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-shimmer-delayed {
+  animation: shimmer-delayed 3s infinite;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-particle-float {
+  animation: particle-float 3s ease-in-out infinite;
+}
+
+.animate-flow-light {
+  animation: flow-light 3s ease-in-out infinite;
+}
+
+.animate-flow-line {
+  animation: flow-line 2s ease-in-out infinite;
+  background-size: 200% 100%;
+}
+
+.animate-flow-gradient {
+  animation: flow-gradient 4s ease-in-out infinite;
+}
+
+.animate-shimmer-text {
+  animation: shimmer-text 3s ease-in-out infinite;
+  background-size: 200% 100%;
+}
+
 :root {
   --foreground-rgb: 250, 250, 252;
   --background-start-rgb: 10, 10, 10;  /* Zama 深黑背景 */
@@ -48,30 +200,30 @@ html {
   background: rgba(0, 0, 0, 0.3);
 }
 
-/* 移动端优化 */
+/* Mobile optimization */
 @media (max-width: 768px) {
   body {
     font-size: 14px;
   }
   
-  /* 触摸优化 */
+  /* Touch optimization */
   button, a {
-    min-height: 44px; /* iOS 推荐的最小触摸目标 */
+    min-height: 44px; /* iOS recommended minimum touch target */
     min-width: 44px;
   }
   
-  /* 输入框优化 */
+  /* Input optimization */
   input, textarea {
-    font-size: 16px; /* 防止 iOS 自动缩放 */
+    font-size: 16px; /* Prevent iOS auto zoom */
   }
   
-  /* 卡片间距优化 */
+  /* Card spacing optimization */
   .card {
     margin-bottom: 1rem;
     padding: 1rem;
   }
   
-  /* 模态框优化 */
+  /* Modal optimization */
   .modal {
     padding: 1rem;
     max-width: 100%;
@@ -79,7 +231,7 @@ html {
   }
 }
 
-/* 平板优化 */
+/* Tablet optimization */
 @media (min-width: 769px) and (max-width: 1024px) {
   .container {
     max-width: 100%;
@@ -87,7 +239,7 @@ html {
   }
 }
 
-/* Zama 风格滚动条 - 黄色主题 */
+/* Zama style scrollbar - yellow theme */
 ::-webkit-scrollbar-track {
   background: rgba(245, 158, 11, 0.05);
 }

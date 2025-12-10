@@ -8,35 +8,24 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Zama 品牌色：黄色+黑色+白色
+        // Zama brand colors: Yellow + Black + White
         zama: {
-          50: '#fffbeb',   // 最浅黄
+          50: '#fffbeb',   // Lightest yellow
           100: '#fef3c7',
           200: '#fde68a',
           300: '#fcd34d',
-          400: '#fbbf24',  // 亮黄
-          500: '#f59e0b',  // 主黄色
-          600: '#d97706',  // 深黄
+          400: '#fbbf24',  // Bright yellow
+          500: '#f59e0b',  // Primary yellow #f59e0b
+          600: '#d97706',  // Deep yellow
           700: '#b45309',
           800: '#92400e',
           900: '#78350f',
-          950: '#451a03',  // 最深
-          black: '#000000', // 纯黑
-          white: '#ffffff', // 纯白
-          dark: '#0a0a0a',  // 深黑背景
-          gray: {
-            50: '#fafafa',
-            100: '#f5f5f5',
-            200: '#e5e5e5',
-            300: '#d4d4d4',
-            400: '#a3a3a3',
-            500: '#737373',
-            600: '#525252',
-            700: '#404040',
-            800: '#262626',
-            900: '#171717',
-            950: '#0a0a0a',
-          },
+          950: '#451a03',  // Darkest
+          black: '#000000', // Pure black
+          white: '#ffffff', // Pure white
+          dark: '#0a0a0a',  // Dark background
+          gold: '#fbbf24',  // Gold accent
+          amber: '#f59e0b', // Amber primary
         },
         primary: {
           50: '#fffbeb',
@@ -58,6 +47,10 @@ module.exports = {
         'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
         'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        'zama': '0 4px 14px 0 rgba(245, 158, 11, 0.3), 0 0 0 1px rgba(245, 158, 11, 0.1)',
+        'zama-lg': '0 10px 25px -5px rgba(245, 158, 11, 0.4), 0 0 0 1px rgba(245, 158, 11, 0.2)',
+        'zama-xl': '0 20px 40px -10px rgba(245, 158, 11, 0.5), 0 0 0 1px rgba(245, 158, 11, 0.3)',
+        'glow': '0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.2)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

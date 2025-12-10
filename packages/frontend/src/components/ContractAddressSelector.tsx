@@ -64,7 +64,7 @@ export default function ContractAddressSelector({
           </p>
         </div>
         {value && isValidAddress(value) && value !== '0x0000000000000000000000000000000000000000' && (
-          <span className="px-3 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full">
+          <span className="px-3 py-1 text-xs bg-zama-500/20 dark:bg-zama-500/30 text-zama-700 dark:text-zama-300 rounded-full">
             ✅ {t.contract.set}
           </span>
         )}
@@ -74,8 +74,8 @@ export default function ContractAddressSelector({
       {value && isValidAddress(value) && (
         <div className={`mb-6 p-6 rounded-xl border-2 shadow-lg ${
           value === '0x0000000000000000000000000000000000000000'
-            ? 'bg-gradient-to-r from-amber-100 via-orange-50 to-yellow-100 dark:from-amber-900/40 dark:via-orange-900/40 dark:to-yellow-900/40 border-amber-300 dark:border-amber-700'
-            : 'bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/40 border-emerald-300 dark:border-emerald-700'
+            ? 'bg-gradient-to-r from-zama-500/20 via-zama-400/15 to-zama-500/20 dark:from-zama-900/50 dark:via-zama-800/40 dark:to-zama-900/50 border-zama-500/40 dark:border-zama-500/60'
+            : 'bg-gradient-to-r from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700 border-zinc-300 dark:border-zinc-600'
         }`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex-1">
@@ -86,15 +86,15 @@ export default function ContractAddressSelector({
                 <div>
                   <p className={`text-lg font-bold ${
                     value === '0x0000000000000000000000000000000000000000'
-                      ? 'text-amber-800 dark:text-amber-200'
-                      : 'text-emerald-800 dark:text-emerald-200'
+                      ? 'text-zama-600 dark:text-zama-400'
+                      : 'text-zama-600 dark:text-zama-400'
                   }`}>
                     {value === '0x0000000000000000000000000000000000000000' 
                       ? t.contract.demoMode
                       : t.contract.addressSet}
                   </p>
                   {value === '0x0000000000000000000000000000000000000000' && (
-                    <p className="text-sm text-amber-700 dark:text-amber-300 font-medium mt-1">
+                    <p className="text-sm text-zama-600 dark:text-zama-400 font-medium mt-1">
                       {t.contract.clickToSwitch}
                     </p>
                   )}
@@ -104,17 +104,17 @@ export default function ContractAddressSelector({
                 {value}
               </p>
               {value === '0x0000000000000000000000000000000000000000' && (
-                <div className="bg-white/70 dark:bg-slate-800/70 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+                <div className="bg-white/70 dark:bg-slate-800/70 rounded-lg p-4 border border-zama-500/40 dark:border-zama-500/50">
                   <div className="flex items-start gap-3 mb-3">
                     <span className="text-2xl">💡</span>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-amber-900 dark:text-amber-100 mb-2">
+                      <p className="text-sm font-bold text-zama-600 dark:text-zama-400 mb-2">
                         {t.contract.wantRealData}
                       </p>
-                      <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed mb-3">
+                      <p className="text-xs text-zama-600 dark:text-zama-400 leading-relaxed mb-3">
                         {t.contract.usingDemo}
                       </p>
-                      <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-100/20 px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-300">
+                      <div className="flex items-center gap-2 text-xs text-zama-600 dark:text-zama-400 bg-zama-500/20 dark:bg-zama-500/30 px-3 py-2 rounded-lg border border-zama-500/40 dark:border-zama-500/50">
                         <span className="text-lg">👉</span>
                         <span>{t.contract.clickChange}</span>
                       </div>
@@ -128,8 +128,8 @@ export default function ContractAddressSelector({
                 onClick={() => onChange('')}
                 className={`px-6 py-3 rounded-xl text-base font-bold transition-all shadow-lg hover:scale-105 transform whitespace-nowrap ${
                   value === '0x0000000000000000000000000000000000000000'
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 border-2 border-blue-400 dark:border-blue-600'
-                    : 'bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-slate-700 border-2 border-blue-300 dark:border-blue-700'
+                    ? 'bg-gradient-to-r from-zama-500 to-zama-600 text-black hover:from-zama-400 hover:to-zama-500 border-2 border-zama-400 dark:border-zama-500 shadow-zama-lg'
+                    : 'bg-white dark:bg-zinc-800 text-zama-600 dark:text-zama-400 hover:bg-zama-50 dark:hover:bg-zinc-700 border-2 border-zama-300 dark:border-zama-500'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -139,12 +139,12 @@ export default function ContractAddressSelector({
               </button>
               {value === '0x0000000000000000000000000000000000000000' && (
                 <div className="text-center">
-                  <p className="text-xs text-amber-700 dark:text-amber-300 font-semibold mb-1">
+                  <p className="text-xs text-zama-600 dark:text-zama-400 font-semibold mb-1">
                     {t.contract.clickAbove}
                   </p>
-                  <div className="flex items-center justify-center gap-1 text-xs text-amber-700 dark:text-amber-300">
+                  <div className="flex items-center justify-center gap-1 text-xs text-zama-600 dark:text-zama-400">
                     <span>{t.contract.thenSelect}</span>
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-200/50 text-blue-700 dark:text-blue-800 rounded font-bold border border-blue-300 dark:border-blue-500">{t.contract.sepoliaTestnet}</span>
+                    <span className="px-2 py-1 bg-zama-500/20 dark:bg-zama-500/30 text-zama-700 dark:text-zama-300 rounded font-bold border border-zama-500/40 dark:border-zama-500/50">{t.contract.sepoliaTestnet}</span>
                   </div>
                 </div>
               )}
@@ -156,10 +156,36 @@ export default function ContractAddressSelector({
       {/* 未设置时显示选择界面 */}
       {(!value || !isValidAddress(value)) && (
         <>
-          {/* 预设地址 - 大按钮，更明显 */}
+          {/* 快速体验按钮 - 最显眼 */}
+          <div className="mb-6">
+            <div className="relative">
+              <button
+                onClick={() => {
+                  const quickAddress = PRESET_ADDRESSES.find(p => p.recommended)?.address || PRESET_ADDRESSES[0].address;
+                  handleSelectPreset(quickAddress);
+                }}
+                className="w-full relative px-8 py-6 bg-gradient-to-r from-zama-500 via-zama-400 to-zama-500 text-black rounded-xl font-bold text-lg hover:from-zama-400 hover:via-zama-300 hover:to-zama-400 transition-all shadow-2xl shadow-zama-500/50 hover:shadow-zama-500/70 transform hover:scale-[1.02] overflow-hidden group"
+              >
+                {/* Animated background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                
+                {/* Content */}
+                <div className="relative z-10 flex items-center justify-center gap-4">
+                  <span className="text-3xl animate-pulse">🚀</span>
+                  <div className="text-left">
+                    <div className="text-xl font-bold mb-1">{t.contract.quickExperience || '快速体验'}</div>
+                    <div className="text-sm opacity-90">{t.contract.quickExperienceDesc || '一键使用已部署的合约，立即开始体验投票功能'}</div>
+                  </div>
+                  <span className="text-2xl">▶️</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* 预设地址 - 其他选项 */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl">🚀</span>
+              <span className="text-2xl">⚙️</span>
               <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
                 {t.contract.preset}
               </p>
@@ -171,25 +197,25 @@ export default function ContractAddressSelector({
                   onClick={() => handleSelectPreset(preset.address)}
                   className={`w-full text-left p-5 border-2 rounded-xl transition-all transform hover:scale-[1.02] hover:shadow-lg ${
                     preset.recommended
-                      ? 'border-blue-400 dark:border-blue-600 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 hover:from-blue-200 hover:to-indigo-200 dark:hover:from-blue-800/50 dark:hover:to-indigo-800/50 shadow-md'
-                      : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm'
+                      ? 'border-zama-500 dark:border-zama-500 bg-gradient-to-r from-zama-500/20 via-zama-400/15 to-zama-500/20 dark:from-zama-900/50 dark:via-zama-800/40 dark:to-zama-900/50 hover:from-zama-500/30 hover:via-zama-400/25 hover:to-zama-500/30 dark:hover:from-zama-800/60 dark:hover:via-zama-700/50 dark:hover:to-zama-800/60 shadow-zama-lg'
+                      : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <p className={`font-bold text-base mb-2 ${
-                        preset.recommended ? 'text-blue-800 dark:text-blue-200' : 'text-slate-900 dark:text-slate-100'
+                        preset.recommended ? 'text-zama-600 dark:text-zama-400' : 'text-zinc-900 dark:text-zinc-100'
                       }`}>
                         {preset.name}
                       </p>
                       <p className={`text-sm ${
-                        preset.recommended ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400'
+                        preset.recommended ? 'text-zama-700 dark:text-zama-300' : 'text-zinc-600 dark:text-zinc-400'
                       }`}>
                         {preset.description}
                       </p>
                     </div>
                     {preset.recommended && (
-                      <span className="ml-4 px-4 py-2 text-sm bg-blue-500 text-white rounded-lg font-bold shadow-md">
+                      <span className="ml-4 px-4 py-2 text-sm bg-zama-500 text-black rounded-lg font-bold shadow-zama">
                         ⭐ {t.contract.recommended || 'Recommended'}
                       </span>
                     )}
@@ -211,7 +237,7 @@ export default function ContractAddressSelector({
               {!showCustomInput && (
                 <button
                   onClick={() => setShowCustomInput(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg text-sm font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:scale-105"
+                  className="px-4 py-2 bg-gradient-to-r from-zama-500 to-zama-600 text-black rounded-lg text-sm font-bold hover:from-zama-400 hover:to-zama-500 transition-all shadow-zama hover:scale-105"
                 >
                   📝 {t.contract.input}
                 </button>
@@ -227,13 +253,13 @@ export default function ContractAddressSelector({
                     value={customAddress}
                     onChange={(e) => setCustomAddress(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSetCustom()}
-                    className="flex-1 px-4 py-2 border border-green-300 dark:border-green-600 rounded-lg dark:bg-slate-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="flex-1 px-4 py-2 border border-zama-300 dark:border-zama-600 rounded-lg dark:bg-zinc-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-zama-500 focus:border-zama-500"
                     autoFocus
                   />
                   <button
                     onClick={handleSetCustom}
                     disabled={!isValidAddress(customAddress)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 bg-zama-500 text-black rounded-lg hover:bg-zama-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold shadow-zama"
                   >
                     {t.common.confirm}
                   </button>
@@ -257,7 +283,7 @@ export default function ContractAddressSelector({
           </div>
 
           {/* 简化提示 */}
-          <div className="mt-6 p-6 bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900/30 dark:via-indigo-900/30 dark:to-purple-900/30 rounded-xl border-2 border-blue-300 dark:border-blue-700 shadow-lg">
+          <div className="mt-6 p-6 bg-gradient-to-r from-zama-500/10 via-zama-400/8 to-zama-500/10 dark:from-zama-900/40 dark:via-zama-800/30 dark:to-zama-900/40 rounded-xl border-2 border-zama-500/30 dark:border-zama-500/50 shadow-zama-lg">
             <div className="flex items-start gap-4">
               <span className="text-3xl">💡</span>
               <div className="flex-1">

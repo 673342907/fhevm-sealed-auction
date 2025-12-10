@@ -11,26 +11,26 @@ import VotingPlatform from '@/components/VotingPlatform';
 import RealTimeNotifications from '@/components/RealTimeNotifications';
 import OnboardingGuide from '@/components/OnboardingGuide';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import FlowAnimationDemo from '@/components/FlowAnimationDemo';
 import { useNotification } from '@/components/NotificationProvider';
 
 export default function Home() {
   const { t } = useLanguage();
   const [account, setAccount] = useState<string | null>(null);
   const [provider, setProvider] = useState<BrowserProvider | null>(null);
-  // 默认合约地址（如果已部署，请替换为实际地址）
-  // 默认使用已部署的投票合约地址
+      // Default contract address (replace with actual address if deployed)
+      // Default to deployed voting contract address
   const [contractAddress, setContractAddress] = useState<string>('0x532d2B3325BA52e7F9FE7De61830A2F120d1082b');
   const [fhevmReady, setFhevmReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showTips, setShowTips] = useState(false);
   
-  // 尝试使用通知系统
+  // Try to use notification system
   let showNotification: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
   try {
     const notification = useNotification();
     showNotification = notification.showNotification;
   } catch {
-    // 如果不在 Provider 中，使用 alert 作为后备
+    // If not in Provider, use alert as fallback
       showNotification = (type, message) => {
       if (type === 'error') {
         alert(`❌ ${t.common.error}: ${message}`);
@@ -44,7 +44,7 @@ export default function Home() {
 
   useEffect(() => {
     checkWalletConnection();
-    // 检查是否需要显示引导
+    // Check if onboarding should be shown
     const seen = localStorage.getItem('voting-platform-onboarding-seen');
     if (!seen) {
       setShowOnboarding(true);
@@ -52,7 +52,7 @@ export default function Home() {
   }, []);
 
   const checkWalletConnection = async () => {
-    // 只检查 MetaMask，忽略其他扩展（如 Talisman）
+    // Only check MetaMask, ignore other extensions (like Talisman)
     const ethereum = safeGetEthereum();
     if (!ethereum) {
       return;
@@ -67,9 +67,9 @@ export default function Home() {
         await initializeFhevm();
       }
     } catch (error: any) {
-      // 忽略 Talisman 相关的错误
+      // Ignore Talisman-related errors
       if (error.message?.includes('Talisman') || error.message?.includes('onboarding')) {
-        console.warn('Talisman 扩展未配置，跳过');
+        console.warn('Talisman extension not configured, skipping');
         return;
       }
       console.error('Error checking wallet:', error);
@@ -78,9 +78,9 @@ export default function Home() {
 
   const initializeFhevm = async () => {
     try {
-      // 添加超时机制（5秒）
+      // Add timeout mechanism (5 seconds)
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('FHEVM 初始化超时')), 5000);
+        setTimeout(() => reject(new Error('FHEVM initialization timeout')), 5000);
       });
 
       await Promise.race([
@@ -89,21 +89,21 @@ export default function Home() {
       ]);
       
       setFhevmReady(true);
-      console.log('✅ FHEVM 初始化成功');
+      console.log('✅ FHEVM initialized successfully');
     } catch (error: any) {
       console.error('Error initializing FHEVM:', error);
-      // 即使初始化失败，也允许继续使用（因为这是占位符实现）
-      // 在实际环境中，应该处理这个错误
-      console.warn('⚠️ FHEVM 初始化失败，但允许继续使用（占位符模式）');
-      setFhevmReady(true); // 设置为 true 以允许继续使用界面
+      // Even if initialization fails, allow continued use (placeholder implementation)
+      // In production, this error should be handled
+      console.warn('⚠️ FHEVM initialization failed, but allowing continued use (placeholder mode)');
+      setFhevmReady(true); // Set to true to allow continued use of the interface
     }
   };
 
   const connectWallet = async () => {
-    // 只使用 MetaMask
+    // Only use MetaMask
     const ethereum = safeGetEthereum();
     if (!ethereum || !isMetaMask()) {
-      alert('请安装 MetaMask 钱包');
+      showNotification('error', t.wallet.notInstalled || 'Please install MetaMask wallet');
       return;
     }
 
@@ -116,16 +116,28 @@ export default function Home() {
       setAccount(address);
       setProvider(provider);
       await initializeFhevm();
-      } catch (error: any) {
-      // 忽略 Talisman 相关的错误
+      showNotification('success', t.wallet.walletConnected || 'Wallet connected');
+    } catch (error: any) {
+      // Ignore Talisman-related errors
       if (error.message?.includes('Talisman') || error.message?.includes('onboarding')) {
         console.warn('Talisman extension not configured, please use MetaMask');
-        alert(t.wallet.connectDesc);
+        showNotification('error', t.wallet.connectDesc);
         return;
       }
-      console.error('Error connecting wallet:', error);
-      alert(t.notification.error);
+      if (error.code === 4001) {
+        showNotification('error', t.wallet.userRejected || 'User rejected connection');
+      } else {
+        console.error('Error connecting wallet:', error);
+        showNotification('error', error.message || t.wallet.connectFailed || 'Failed to connect wallet');
+      }
     }
+  };
+
+  const disconnectWallet = () => {
+    setAccount(null);
+    setProvider(null);
+    setFhevmReady(false);
+    showNotification('success', t.wallet.walletDisconnected || 'Wallet disconnected');
   };
 
   return (
@@ -134,7 +146,7 @@ export default function Home() {
         <header className="mb-6 text-center md:text-left">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div className="flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-zama-400 via-zama-500 to-zama-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-zama-400 via-zama-500 to-zama-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">
                 🗳️ {t.home.title}
               </h1>
               <p className="text-sm text-zinc-400 dark:text-zinc-500">
@@ -143,47 +155,23 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-3">
               <LanguageSwitcher />
-              <button
-                onClick={() => setShowTips(!showTips)}
-                className="px-4 py-2 text-sm bg-zama-500/10 dark:bg-zama-500/20 text-zama-600 dark:text-zama-400 rounded-lg border border-zama-500/30 dark:border-zama-500/40 hover:bg-zama-500/20 dark:hover:bg-zama-500/30 transition-colors font-medium"
-              >
-                {showTips ? `📋 ${t.home.hideTips}` : `💡 ${t.home.tips}`}
-              </button>
             </div>
           </div>
-
-          {/* 功能提示（可折叠） - Zama 黄色+黑色风格 */}
-          {showTips && (
-            <div className="mb-6 bg-black/80 dark:bg-black/90 rounded-lg p-4 border-2 border-zama-500/50 dark:border-zama-500/60 backdrop-blur-sm">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="text-center p-3 rounded-lg bg-zama-500/10 dark:bg-zama-500/15 border border-zama-500/30 dark:border-zama-500/40">
-                  <div className="text-2xl mb-1">🔐</div>
-                  <div className="font-medium text-zama-400 dark:text-zama-300 text-xs">{t.features.encryptedVote}</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-zama-500/10 dark:bg-zama-500/15 border border-zama-500/30 dark:border-zama-500/40">
-                  <div className="text-2xl mb-1">⚖️</div>
-                  <div className="font-medium text-zama-400 dark:text-zama-300 text-xs">{t.features.weightedVote}</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-zama-500/10 dark:bg-zama-500/15 border border-zama-500/30 dark:border-zama-500/40">
-                  <div className="text-2xl mb-1">📊</div>
-                  <div className="font-medium text-zama-400 dark:text-zama-300 text-xs">{t.features.realtimeStats}</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-zama-500/10 dark:bg-zama-500/15 border border-zama-500/30 dark:border-zama-500/40">
-                  <div className="text-2xl mb-1">🎯</div>
-                  <div className="font-medium text-zama-400 dark:text-zama-300 text-xs">{t.features.autoReveal}</div>
-                </div>
-              </div>
-            </div>
-          )}
         </header>
+
+        {/* Full flow animation demo */}
+        <div className="mb-6">
+          <FlowAnimationDemo />
+        </div>
 
         <WalletConnect
           account={account}
           onConnect={connectWallet}
+          onDisconnect={disconnectWallet}
           fhevmReady={fhevmReady}
         />
 
-        {/* 引导模式 */}
+        {/* Onboarding guide */}
         {showOnboarding && (
           <OnboardingGuide
             onComplete={() => setShowOnboarding(false)}
@@ -193,26 +181,26 @@ export default function Home() {
 
         {account && fhevmReady && (
           <div className="mt-6 space-y-4">
-            {/* 合约地址配置 - 简化显示 */}
+            {/* Contract address configuration - simplified display */}
             <ContractAddressSelector
               value={contractAddress}
               onChange={(addr) => {
                 setContractAddress(addr);
                 if (addr) {
-                  showNotification('success', '合约地址已设置');
+                  showNotification('success', t.contract.set || 'Contract address set');
                 }
               }}
               onSet={() => {
                 if (contractAddress) {
-                  showNotification('success', '合约地址已设置');
+                  showNotification('success', t.contract.set || 'Contract address set');
                 }
               }}
             />
 
-            {/* 统一视图 - 包含所有功能 */}
+            {/* Unified view - includes all features */}
             {contractAddress && (
               <div id="main-content">
-                {/* 实时通知系统（后台运行） */}
+                {/* Real-time notification system (background) */}
                 <div id="feature-realtime-notify" className="scroll-mt-20">
                   <RealTimeNotifications
                     provider={provider}
@@ -222,7 +210,7 @@ export default function Home() {
                   />
                 </div>
 
-                {/* 投票平台 */}
+                {/* Voting platform */}
                 <div id="feature-encrypted-vote" className="scroll-mt-20">
                   <VotingPlatform
                     provider={provider}
