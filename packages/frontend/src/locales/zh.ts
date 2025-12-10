@@ -165,6 +165,7 @@ export const zh = {
     invalid: '无效的地址格式',
     deployed: '已部署到 Sepolia 测试网的投票平台合约',
     local: 'Hardhat 本地网络（需要先部署合约）',
+    recommended: '推荐',
     setAddressFirst: '请先设置合约地址',
     setAddressDesc: '部署投票合约后，将合约地址输入到上方的"合约地址配置"中',
     demoMode: '当前为演示模式',
