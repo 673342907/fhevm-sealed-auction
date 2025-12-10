@@ -65,6 +65,7 @@ export default function VotingPlatform({
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   
   const createTransaction = useTransaction();
+  const voteTransaction = useTransaction();
   const endProposalTransaction = useTransaction();
 
   // Preset proposal templates - dynamically generated based on language
