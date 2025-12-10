@@ -1,0 +1,25 @@
+{
+  "name": "fhevm-sealed-auction",
+  "version": "1.0.0",
+  "description": "隐私保护的密封投标拍卖系统 - 基于 FHEVM",
+  "private": true,
+  "scripts": {
+    "dev": "cd packages/frontend && npm run dev",
+    "build": "cd packages/frontend && npm run build",
+    "start": "cd packages/frontend && npm run start",
+    "compile": "cd packages/contracts && npx hardhat compile",
+    "test": "cd packages/contracts && npx hardhat test",
+    "deploy:sepolia": "cd packages/contracts && npx hardhat run scripts/deploy.js --network sepolia"
+  },
+  "keywords": [
+    "fhevm",
+    "fhe",
+    "auction",
+    "privacy",
+    "blockchain",
+    "ethereum"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+
