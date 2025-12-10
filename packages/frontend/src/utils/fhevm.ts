@@ -278,7 +278,7 @@ export async function publicDecrypt(
   // 公共解密不需要签名，但需要合约支持
   // 注意：这需要合约中有相应的公共解密函数
   try {
-    const decrypted = fhevm.decrypt(contractAddress, encrypted);
+    const decrypted = fhevm.decrypt(contractAddress, encrypted, '');
     return Number(decrypted);
   } catch (error) {
     console.error("Public decrypt error:", error);
