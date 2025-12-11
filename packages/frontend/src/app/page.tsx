@@ -46,38 +46,23 @@ export default function Home() {
   }
 
   useEffect(() => {
-    checkWalletConnection();
-    // Check if onboarding should be shown
+    // Only check onboarding, completely disable automatic wallet checking
+    // This prevents wallet selection popup from appearing automatically on page load
+    // User must manually click "Connect Wallet" button to connect
     const seen = localStorage.getItem('voting-platform-onboarding-seen');
     if (!seen) {
       setShowOnboarding(true);
     }
+    
+    // NOTE: We intentionally do NOT check for existing wallet connections on page load
+    // because:
+    // 1. Accessing window.ethereum with multiple wallets installed triggers browser popup
+    // 2. Even eth_accounts can trigger popup in some wallet implementations
+    // 3. User experience is better when they explicitly choose to connect
+    // 
+    // If you want to restore previous connections, you can implement a more sophisticated
+    // solution that uses wallet-specific APIs or waits for user interaction first
   }, []);
-
-  const checkWalletConnection = async () => {
-    // Check for any connected wallet (passive check, don't trigger connection)
-    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
-    if (!ethereum) {
-      return;
-    }
-
-    try {
-      // Use eth_accounts which doesn't trigger connection request
-      // This only returns accounts that are already connected
-      const accounts = await ethereum.request({ method: 'eth_accounts' });
-      
-      if (accounts && accounts.length > 0) {
-        // Found connected account, set up provider
-        const provider = new BrowserProvider(ethereum);
-        setAccount(accounts[0]);
-        setProvider(provider);
-        await initializeFhevm();
-      }
-    } catch (error: any) {
-      // Silently fail, don't show error on page load
-      console.log('No wallet connected:', error);
-    }
-  };
 
   const initializeFhevm = async () => {
     try {
@@ -142,10 +127,14 @@ export default function Home() {
       // Initialize FHEVM after everything is set up
       try {
         await initializeFhevm();
+        // Store connection info for future auto-connect
+        localStorage.setItem('last-connected-wallet', wallet.name);
         showNotification('success', t.wallet.walletConnected || 'Wallet connected');
       } catch (fhevmError) {
         // FHEVM initialization failure is not critical
         console.warn('FHEVM initialization failed, but wallet is connected:', fhevmError);
+        // Store connection info even if FHEVM fails
+        localStorage.setItem('last-connected-wallet', wallet.name);
         showNotification('success', t.wallet.walletConnected || 'Wallet connected');
       }
     } catch (error: any) {
@@ -162,6 +151,8 @@ export default function Home() {
     setAccount(null);
     setProvider(null);
     setFhevmReady(false);
+    // Clear stored connection info
+    localStorage.removeItem('last-connected-wallet');
     showNotification('success', t.wallet.walletDisconnected || 'Wallet disconnected');
   };
 

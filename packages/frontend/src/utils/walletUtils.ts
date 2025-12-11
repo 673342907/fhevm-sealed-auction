@@ -125,6 +125,8 @@ export function isOKXWallet(ethereum?: any): boolean {
 
 /**
  * 检测所有可用的钱包扩展
+ * 注意：此函数会访问 window.ethereum，可能会触发钱包选择弹窗
+ * 因此应该只在用户主动请求连接钱包时调用
  */
 export function detectWallets(): WalletInfo[] {
   const wallets: WalletInfo[] = [];
@@ -134,73 +136,98 @@ export function detectWallets(): WalletInfo[] {
     return wallets;
   }
 
-  // 检测 OKX Wallet (可能通过 window.okxwallet 访问)
-  if ((window as any).okxwallet) {
-    const okxProvider = (window as any).okxwallet;
-    if (!seenNames.has('OKX Wallet')) {
-      seenNames.add('OKX Wallet');
-      wallets.push({
-        name: 'OKX Wallet',
-        icon: '🟢',
-        provider: okxProvider,
-        isInstalled: true,
-      });
+  try {
+    // 检测 OKX Wallet (可能通过 window.okxwallet 访问)
+    if ((window as any).okxwallet) {
+      const okxProvider = (window as any).okxwallet;
+      if (!seenNames.has('OKX Wallet')) {
+        seenNames.add('OKX Wallet');
+        wallets.push({
+          name: 'OKX Wallet',
+          icon: '🟢',
+          provider: okxProvider,
+          isInstalled: true,
+        });
+      }
     }
-  }
 
-  const ethereum = (window as any).ethereum;
-  if (!ethereum) {
-    return wallets;
-  }
+    const ethereum = (window as any).ethereum;
+    if (!ethereum) {
+      return wallets;
+    }
 
-  // 检测多个钱包提供者（EIP-6963 标准）
-  const providers = Array.isArray(ethereum.providers) ? ethereum.providers : [ethereum];
-  
-  providers.forEach((provider: any) => {
-    let walletName = '';
-    let walletIcon = '';
-    
-    if (isMetaMask(provider)) {
-      walletName = 'MetaMask';
-      walletIcon = '🦊';
-    } else if (isPhantom(provider)) {
-      walletName = 'Phantom';
-      walletIcon = '👻';
-    } else if (isCoinbaseWallet(provider)) {
-      walletName = 'Coinbase Wallet';
-      walletIcon = '🔷';
-    } else if (isTrust(provider)) {
-      walletName = 'Trust Wallet';
-      walletIcon = '🔒';
-    } else if (isBraveWallet(provider)) {
-      walletName = 'Brave Wallet';
-      walletIcon = '🦁';
-    } else if (isOpera(provider)) {
-      walletName = 'Opera Wallet';
-      walletIcon = '🎭';
-    } else if (isTalisman(provider)) {
-      walletName = 'Talisman';
-      walletIcon = '🔮';
-    } else if (isOKXWallet(provider)) {
-      walletName = 'OKX Wallet';
-      walletIcon = '🟢';
-    } else if (provider && typeof provider.request === 'function') {
-      // 未知但兼容 EIP-1193 的钱包
-      walletName = 'EIP-1193 Wallet';
-      walletIcon = '💼';
+    // 检测多个钱包提供者（EIP-6963 标准）
+    // 注意：访问 ethereum.providers 可能会触发钱包选择弹窗
+    // 因此我们使用 try-catch 来安全地访问
+    let providers: any[] = [];
+    try {
+      // 先检查是否有 providers 属性，避免触发弹窗
+      if (Array.isArray(ethereum.providers) && ethereum.providers.length > 0) {
+        providers = ethereum.providers;
+      } else {
+        // 单个钱包提供者
+        providers = [ethereum];
+      }
+    } catch (error) {
+      // 如果访问 providers 失败，回退到单个提供者
+      console.warn('Error accessing ethereum.providers:', error);
+      providers = [ethereum];
     }
     
-    // 只添加未重复的钱包
-    if (walletName && !seenNames.has(walletName)) {
-      seenNames.add(walletName);
-      wallets.push({
-        name: walletName,
-        icon: walletIcon,
-        provider,
-        isInstalled: true,
-      });
-    }
-  });
+    providers.forEach((provider: any) => {
+      try {
+        let walletName = '';
+        let walletIcon = '';
+        
+        if (isMetaMask(provider)) {
+          walletName = 'MetaMask';
+          walletIcon = '🦊';
+        } else if (isPhantom(provider)) {
+          walletName = 'Phantom';
+          walletIcon = '👻';
+        } else if (isCoinbaseWallet(provider)) {
+          walletName = 'Coinbase Wallet';
+          walletIcon = '🔷';
+        } else if (isTrust(provider)) {
+          walletName = 'Trust Wallet';
+          walletIcon = '🔒';
+        } else if (isBraveWallet(provider)) {
+          walletName = 'Brave Wallet';
+          walletIcon = '🦁';
+        } else if (isOpera(provider)) {
+          walletName = 'Opera Wallet';
+          walletIcon = '🎭';
+        } else if (isTalisman(provider)) {
+          walletName = 'Talisman';
+          walletIcon = '🔮';
+        } else if (isOKXWallet(provider)) {
+          walletName = 'OKX Wallet';
+          walletIcon = '🟢';
+        } else if (provider && typeof provider.request === 'function') {
+          // 未知但兼容 EIP-1193 的钱包
+          walletName = 'EIP-1193 Wallet';
+          walletIcon = '💼';
+        }
+        
+        // 只添加未重复的钱包
+        if (walletName && !seenNames.has(walletName)) {
+          seenNames.add(walletName);
+          wallets.push({
+            name: walletName,
+            icon: walletIcon,
+            provider,
+            isInstalled: true,
+          });
+        }
+      } catch (error) {
+        // 跳过检测失败的钱包
+        console.warn('Error detecting wallet:', error);
+      }
+    });
+  } catch (error) {
+    // 如果整个检测过程失败，返回空数组
+    console.warn('Error in detectWallets:', error);
+  }
 
   return wallets;
 }

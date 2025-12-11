@@ -15,9 +15,22 @@ export default function WalletSelector({ onSelect, onClose }: WalletSelectorProp
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const allWallets = getAllSupportedWallets();
-    setWallets(allWallets);
-    setLoading(false);
+    // Delay wallet detection slightly to avoid triggering popups on component mount
+    // Only detect wallets when the selector is actually shown
+    const timer = setTimeout(() => {
+      try {
+        const allWallets = getAllSupportedWallets();
+        setWallets(allWallets);
+      } catch (error) {
+        console.warn('Error detecting wallets:', error);
+        // If detection fails, show empty list
+        setWallets([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 100); // Small delay to ensure component is fully mounted
+    
+    return () => clearTimeout(timer);
   }, []);
 
   if (loading) {
