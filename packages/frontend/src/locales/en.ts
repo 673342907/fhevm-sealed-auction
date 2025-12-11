@@ -92,6 +92,11 @@ export const en = {
     noWalletDesc: 'Please install a Web3 wallet extension to continue.',
     installed: 'Installed',
     needInstall: "Don't have a wallet? Install one from the links above.",
+    installedWallets: 'Installed Wallets',
+    availableWallets: 'Available Wallets',
+    clickToInstall: 'Click to install',
+    wrongNetwork: 'Please switch to Sepolia testnet (Chain ID: 11155111)',
+    networkSwitched: 'Switched to Sepolia testnet',
   },
 
   // Onboarding
@@ -158,6 +163,7 @@ export const en = {
     endSuccess: '✅ Proposal ended early successfully!',
     endFailed: 'Failed to end proposal early',
     weighted: 'Weighted',
+    wrongNetwork: 'Please switch to Sepolia testnet (Chain ID: 11155111)',
   },
 
   // Contract address

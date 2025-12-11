@@ -92,6 +92,11 @@ export const zh = {
     noWalletDesc: '请安装 Web3 钱包扩展以继续使用。',
     installed: '已安装',
     needInstall: '没有钱包？请从上方链接安装。',
+    installedWallets: '已安装的钱包',
+    availableWallets: '可用的钱包',
+    clickToInstall: '点击安装',
+    wrongNetwork: '请切换到 Sepolia 测试网 (Chain ID: 11155111)',
+    networkSwitched: '已切换到 Sepolia 测试网',
   },
 
   // 引导
@@ -158,6 +163,7 @@ export const zh = {
     endSuccess: '✅ 提案已提前结束！',
     endFailed: '提前结束提案失败',
     weighted: '加权',
+    wrongNetwork: '请切换到 Sepolia 测试网 (Chain ID: 11155111)',
   },
 
   // 合约地址

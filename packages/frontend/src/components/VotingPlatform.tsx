@@ -7,6 +7,7 @@ import { encryptValue, decryptMultiple } from '@/utils/fhevm';
 import { useTransaction } from '@/hooks/useTransaction';
 import { useNotification } from '@/components/NotificationProvider';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { checkAndSwitchNetwork, getCurrentNetwork } from '@/utils/networkUtils';
 import LoadingSpinner from './LoadingSpinner';
 
 interface VotingPlatformProps {
@@ -175,6 +176,22 @@ export default function VotingPlatform({
     let proposalList: Proposal[] = [];
     
     try {
+      // Check network before calling contract
+      try {
+        const network = await provider.getNetwork();
+        console.log('Current network:', network);
+        
+        // Check if contract address is valid (not zero address)
+        if (contractAddress === '0x0000000000000000000000000000000000000000') {
+          setLoading(false);
+          setProposals([]);
+          return;
+        }
+      } catch (networkError) {
+        console.warn('Network check failed:', networkError);
+        // Continue anyway, let the contract call fail if network is wrong
+      }
+      
       const contract = getVotingContract(contractAddress, provider);
       
       // Get proposal count, increase timeout to 60 seconds
@@ -186,9 +203,35 @@ export default function VotingPlatform({
         counter = await Promise.race([contract.proposalCounter(), timeoutPromise]) as bigint;
       } catch (error: any) {
         console.error('Error getting proposal counter:', error);
+        
+        // Check for BAD_DATA error (empty result, contract might not exist)
+        if (error?.code === 'BAD_DATA' || error?.code === 'CALL_EXCEPTION' || error?.message?.includes('could not decode result data') || error?.message?.includes('BAD_DATA')) {
+          // Contract might not exist or not deployed, silently handle
+          setLoading(false);
+          setProposals([]);
+          return; // No proposals, just return without error
+        }
+        
+        // Check for specific error types
+        if (error?.code === 'CALL_EXCEPTION' || error?.message?.includes('CALL_EXCEPTION')) {
+          const network = await provider.getNetwork().catch(() => null);
+          if (network) {
+            errorMessage = `Contract call failed. Please check: 1) Network is correct (Sepolia: 11155111), 2) Contract address is valid, 3) Contract is deployed on this network. Current network: ${network.name} (${network.chainId})`;
+          } else {
+            errorMessage = 'Contract call failed. Please check network and contract address.';
+          }
+        } else if (error?.message?.includes('missing revert data')) {
+          errorMessage = 'Contract not found or network mismatch. Please check: 1) You are on the correct network (Sepolia testnet), 2) Contract address is correct.';
+        } else {
+          errorMessage = error?.message || 'Failed to get proposal count';
+        }
+        
         hasError = true;
-        errorMessage = error?.message || 'Failed to get proposal count';
-        throw error;
+        // Don't throw, show error but allow user to continue
+        setLoading(false);
+        showNotification('error', t.voting.loadFailed + ': ' + errorMessage);
+        setProposals([]);
+        return;
       }
       
       const count = Number(counter);
@@ -278,12 +321,15 @@ export default function VotingPlatform({
       
       // Only show error if truly failed and no proposals loaded
       if (hasError && proposalList.length === 0) {
-        if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-          showNotification('error', 'Request timeout. Please check your network connection and try again.');
-        } else if (errorMessage.includes('network') || errorMessage.includes('Network')) {
-          showNotification('error', 'Network error. Please check your connection.');
-        } else {
-          showNotification('error', t.voting.loadFailed + ': ' + errorMessage);
+        // Error already shown above, don't show again
+        if (!errorMessage.includes('Contract call failed') && !errorMessage.includes('Contract not found')) {
+          if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+            showNotification('error', 'Request timeout. Please check your network connection and try again.');
+          } else if (errorMessage.includes('network') || errorMessage.includes('Network')) {
+            showNotification('error', 'Network error. Please check your connection.');
+          } else {
+            showNotification('error', t.voting.loadFailed + ': ' + errorMessage);
+          }
         }
       }
     }
@@ -293,6 +339,21 @@ export default function VotingPlatform({
     if (!provider || !contractAddress || !proposalTitle || !proposalDescription) {
       showNotification('error', t.voting.fillRequired);
       return;
+    }
+
+    // Check network before creating proposal
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
+    if (ethereum) {
+      const currentNetwork = await getCurrentNetwork(provider);
+      if (currentNetwork && Number(currentNetwork.chainId) !== 11155111) {
+        const networkResult = await checkAndSwitchNetwork(provider, ethereum);
+        if (!networkResult.isCorrect) {
+          showNotification('error', t.voting.wrongNetwork || `Please switch to Sepolia testnet (Chain ID: 11155111). Current network: ${currentNetwork.name} (${currentNetwork.chainId})`);
+          return;
+        }
+        // Network switched, wait a moment for it to take effect
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
     try {
@@ -333,6 +394,20 @@ export default function VotingPlatform({
   const handleVote = async (proposalId: number, optionIndex: number) => {
     if (!provider || !contractAddress) return;
 
+    // Check network before voting
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
+    if (ethereum) {
+      const currentNetwork = await getCurrentNetwork(provider);
+      if (currentNetwork && Number(currentNetwork.chainId) !== 11155111) {
+        const networkResult = await checkAndSwitchNetwork(provider, ethereum);
+        if (!networkResult.isCorrect) {
+          showNotification('error', t.voting.wrongNetwork || `Please switch to Sepolia testnet (Chain ID: 11155111). Current network: ${currentNetwork.name} (${currentNetwork.chainId})`);
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
     try {
       // Encrypted vote options (0=Support, 1=Against)
       const encryptedVote = await encryptValue(contractAddress, account, optionIndex);
@@ -366,6 +441,20 @@ export default function VotingPlatform({
     // Confirmation dialog
     if (!confirm(t.voting.endEarlyConfirm)) {
       return;
+    }
+
+    // Check network before ending proposal
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
+    if (ethereum) {
+      const currentNetwork = await getCurrentNetwork(provider);
+      if (currentNetwork && Number(currentNetwork.chainId) !== 11155111) {
+        const networkResult = await checkAndSwitchNetwork(provider, ethereum);
+        if (!networkResult.isCorrect) {
+          showNotification('error', t.voting.wrongNetwork || `Please switch to Sepolia testnet (Chain ID: 11155111). Current network: ${currentNetwork.name} (${currentNetwork.chainId})`);
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
     try {

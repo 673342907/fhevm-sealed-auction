@@ -122,6 +122,19 @@ export default function Home() {
       
       setAccount(address);
       setProvider(provider);
+      
+      // Check network after connection
+      const { getCurrentNetwork, checkAndSwitchNetwork } = await import('@/utils/networkUtils');
+      const currentNetwork = await getCurrentNetwork(provider);
+      if (currentNetwork && Number(currentNetwork.chainId) !== 11155111) {
+        const networkResult = await checkAndSwitchNetwork(provider, wallet.provider);
+        if (!networkResult.isCorrect) {
+          showNotification('warning', t.wallet.wrongNetwork || `Please switch to Sepolia testnet (Chain ID: 11155111). Current network: ${currentNetwork.name} (${currentNetwork.chainId})`);
+        } else {
+          showNotification('info', t.wallet.networkSwitched || 'Switched to Sepolia testnet');
+        }
+      }
+      
       await initializeFhevm();
       showNotification('success', t.wallet.walletConnected || 'Wallet connected');
     } catch (error: any) {
