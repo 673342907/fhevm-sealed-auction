@@ -106,6 +106,8 @@ export const en = {
     proposalList: 'Proposal List',
     noProposals: 'No proposals yet',
     createFirst: 'Create the first proposal',
+    localNetworkWarning: 'Local Network Notice',
+    localNetworkDesc: 'You are connected to a local network. Proposals created on other networks (like Sepolia testnet) will not be visible here. Switch to the correct network to see your proposals.',
     proposalTitle: 'Proposal Title',
     proposalDesc: 'Proposal Description',
     votingDuration: 'Voting Duration',

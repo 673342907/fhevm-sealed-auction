@@ -563,6 +563,16 @@ export default function VotingPlatform({
                 <p className="text-sm text-zinc-500 dark:text-zinc-500 mb-4">
                   {t.voting.createFirst}
                 </p>
+                {contractAddress === '0x5FbDB2315678afecb367f032d93F642f64180aa3' && (
+                  <div className="mb-4 p-4 bg-yellow-500/20 dark:bg-yellow-500/10 border border-yellow-500/40 dark:border-yellow-500/30 rounded-lg">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+                      <strong>⚠️ {t.voting.localNetworkWarning || 'Local Network Notice'}</strong>
+                    </p>
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                      {t.voting.localNetworkDesc || 'You are connected to a local network. Proposals created on other networks (like Sepolia testnet) will not be visible here. Switch to the correct network to see your proposals.'}
+                    </p>
+                  </div>
+                )}
                 <button
                   onClick={() => setShowCreateForm(true)}
                   className="px-6 py-3 bg-zama-500 text-black rounded-lg font-bold hover:bg-zama-400 shadow-lg shadow-zama-500/50"

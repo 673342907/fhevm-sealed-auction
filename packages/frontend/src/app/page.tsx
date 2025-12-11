@@ -58,21 +58,21 @@ export default function Home() {
       return;
     }
 
-    try {
+      try {
       const provider = new BrowserProvider(ethereum);
-      const accounts = await provider.listAccounts();
-      if (accounts.length > 0) {
-        setAccount(accounts[0].address);
-        setProvider(provider);
-        await initializeFhevm();
-      }
+        const accounts = await provider.listAccounts();
+        if (accounts.length > 0) {
+          setAccount(accounts[0].address);
+          setProvider(provider);
+          await initializeFhevm();
+        }
     } catch (error: any) {
       // Ignore Talisman-related errors
       if (error.message?.includes('Talisman') || error.message?.includes('onboarding')) {
         console.warn('Talisman extension not configured, skipping');
         return;
       }
-      console.error('Error checking wallet:', error);
+        console.error('Error checking wallet:', error);
     }
   };
 
@@ -100,10 +100,10 @@ export default function Home() {
   };
 
   const connectWallet = async () => {
-    // Only use MetaMask
-    const ethereum = safeGetEthereum();
-    if (!ethereum || !isMetaMask()) {
-      showNotification('error', t.wallet.notInstalled || 'Please install MetaMask wallet');
+    // Support all EIP-1193 compatible wallets
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
+    if (!ethereum) {
+      showNotification('error', t.wallet.notInstalled || 'Please install a Web3 wallet (MetaMask, Coinbase Wallet, etc.)');
       return;
     }
 
@@ -118,12 +118,6 @@ export default function Home() {
       await initializeFhevm();
       showNotification('success', t.wallet.walletConnected || 'Wallet connected');
     } catch (error: any) {
-      // Ignore Talisman-related errors
-      if (error.message?.includes('Talisman') || error.message?.includes('onboarding')) {
-        console.warn('Talisman extension not configured, please use MetaMask');
-        showNotification('error', t.wallet.connectDesc);
-        return;
-      }
       if (error.code === 4001) {
         showNotification('error', t.wallet.userRejected || 'User rejected connection');
       } else {
@@ -183,7 +177,7 @@ export default function Home() {
           <div className="mt-6 space-y-4">
             {/* Contract address configuration - simplified display */}
             <ContractAddressSelector
-              value={contractAddress}
+                  value={contractAddress}
               onChange={(addr) => {
                 setContractAddress(addr);
                 if (addr) {
@@ -191,10 +185,10 @@ export default function Home() {
                 }
               }}
               onSet={() => {
-                if (contractAddress) {
+                    if (contractAddress) {
                   showNotification('success', t.contract.set || 'Contract address set');
-                }
-              }}
+                    }
+                  }}
             />
 
             {/* Unified view - includes all features */}
@@ -203,20 +197,20 @@ export default function Home() {
                 {/* Real-time notification system (background) */}
                 <div id="feature-realtime-notify" className="scroll-mt-20">
                   <RealTimeNotifications
-                    provider={provider}
-                    contractAddress={contractAddress}
+              provider={provider}
+              contractAddress={contractAddress}
                     account={account}
                     enabled={true}
-                  />
+            />
                 </div>
 
                 {/* Voting platform */}
                 <div id="feature-encrypted-vote" className="scroll-mt-20">
                   <VotingPlatform
-                    provider={provider}
-                    contractAddress={contractAddress}
-                    account={account}
-                  />
+                provider={provider}
+                contractAddress={contractAddress}
+                account={account}
+              />
                 </div>
               </div>
             )}

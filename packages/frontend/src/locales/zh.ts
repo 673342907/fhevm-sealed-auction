@@ -106,6 +106,8 @@ export const zh = {
     proposalList: '提案列表',
     noProposals: '暂无提案',
     createFirst: '创建第一个提案',
+    localNetworkWarning: '本地网络提示',
+    localNetworkDesc: '您当前连接的是本地网络。在其他网络（如 Sepolia 测试网）创建的提案不会显示在这里。请切换到正确的网络以查看您的提案。',
     proposalTitle: '提案标题',
     proposalDesc: '提案描述',
     votingDuration: '投票时长',
