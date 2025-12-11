@@ -6,6 +6,7 @@ import { initFhevm } from '@/utils/fhevm';
 import { safeGetEthereum, isMetaMask } from '@/utils/walletUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import WalletConnect from '@/components/WalletConnect';
+import WalletSelector from '@/components/WalletSelector';
 import ContractAddressSelector from '@/components/ContractAddressSelector';
 import VotingPlatform from '@/components/VotingPlatform';
 import RealTimeNotifications from '@/components/RealTimeNotifications';
@@ -13,6 +14,7 @@ import OnboardingGuide from '@/components/OnboardingGuide';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import FlowAnimationDemo from '@/components/FlowAnimationDemo';
 import { useNotification } from '@/components/NotificationProvider';
+import { WalletInfo } from '@/utils/walletUtils';
 
 export default function Home() {
   const { t } = useLanguage();
@@ -23,6 +25,7 @@ export default function Home() {
   const [contractAddress, setContractAddress] = useState<string>('0x532d2B3325BA52e7F9FE7De61830A2F120d1082b');
   const [fhevmReady, setFhevmReady] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showWalletSelector, setShowWalletSelector] = useState(false);
   
   // Try to use notification system
   let showNotification: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
@@ -52,27 +55,33 @@ export default function Home() {
   }, []);
 
   const checkWalletConnection = async () => {
-    // Only check MetaMask, ignore other extensions (like Talisman)
-    const ethereum = safeGetEthereum();
+    // Check for any connected wallet
+    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
     if (!ethereum) {
       return;
     }
 
-      try {
-      const provider = new BrowserProvider(ethereum);
-        const accounts = await provider.listAccounts();
-        if (accounts.length > 0) {
-          setAccount(accounts[0].address);
-          setProvider(provider);
-          await initializeFhevm();
+    try {
+      // Handle multiple providers (EIP-6963)
+      const providers = Array.isArray(ethereum.providers) ? ethereum.providers : [ethereum];
+      
+      for (const provider of providers) {
+        try {
+          const browserProvider = new BrowserProvider(provider);
+          const accounts = await browserProvider.listAccounts();
+          if (accounts.length > 0) {
+            setAccount(accounts[0].address);
+            setProvider(browserProvider);
+            await initializeFhevm();
+            return; // Found connected wallet, exit
+          }
+        } catch (err) {
+          // Continue to next provider
+          continue;
         }
-    } catch (error: any) {
-      // Ignore Talisman-related errors
-      if (error.message?.includes('Talisman') || error.message?.includes('onboarding')) {
-        console.warn('Talisman extension not configured, skipping');
-        return;
       }
-        console.error('Error checking wallet:', error);
+    } catch (error: any) {
+      console.error('Error checking wallet:', error);
     }
   };
 
@@ -100,15 +109,13 @@ export default function Home() {
   };
 
   const connectWallet = async () => {
-    // Support all EIP-1193 compatible wallets
-    const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
-    if (!ethereum) {
-      showNotification('error', t.wallet.notInstalled || 'Please install a Web3 wallet (MetaMask, Coinbase Wallet, etc.)');
-      return;
-    }
+    // Show wallet selector if multiple wallets are available
+    setShowWalletSelector(true);
+  };
 
+  const handleWalletSelect = async (wallet: WalletInfo) => {
     try {
-      const provider = new BrowserProvider(ethereum);
+      const provider = new BrowserProvider(wallet.provider);
       await provider.send('eth_requestAccounts', []);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
@@ -262,6 +269,14 @@ export default function Home() {
         )}
 
       </div>
+      
+      {/* Wallet Selector Modal */}
+      {showWalletSelector && (
+        <WalletSelector
+          onSelect={handleWalletSelect}
+          onClose={() => setShowWalletSelector(false)}
+        />
+      )}
     </main>
   );
 }
