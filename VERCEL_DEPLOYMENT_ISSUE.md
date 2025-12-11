@@ -42,3 +42,5 @@
 
 **最简单的方法**：在 Vercel 控制台手动配置项目设置，并设置 `NPM_CONFIG_LEGACY_PEER_DEPS=true` 环境变量，然后重新部署。
 
+
+

@@ -74,11 +74,11 @@ export async function decryptValue(
   let signature = signatureCache.get(cacheKey);
   
   if (!signature) {
-    // 获取解密权限
-    const token = fhevm.getTokenSignature(contractAddress);
-    if (!token.publicKey) {
-      throw new Error("Public key not found");
-    }
+  // 获取解密权限
+  const token = fhevm.getTokenSignature(contractAddress);
+  if (!token.publicKey) {
+    throw new Error("Public key not found");
+  }
 
     // 检查并修复 types 格式
     let types = token.types;
@@ -103,13 +103,13 @@ export async function decryptValue(
       }
     }
 
-    // 使用 EIP-712 签名解密
+  // 使用 EIP-712 签名解密
     try {
       signature = await signer.signTypedData(
-        token.domain,
+    token.domain,
         types,
-        { publicKey: token.publicKey }
-      );
+    { publicKey: token.publicKey }
+  );
       // 缓存签名
       signatureCache.set(cacheKey, signature);
     } catch (error: any) {
