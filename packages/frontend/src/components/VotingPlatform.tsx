@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BrowserProvider } from 'ethers';
 import { getVotingContract } from '@/utils/votingContract';
 import { encryptValue, decryptMultiple } from '@/utils/fhevm';
@@ -64,6 +64,9 @@ export default function VotingPlatform({
   const [votingDuration, setVotingDuration] = useState('86400'); // Default 1 day
   const [useWeighted, setUseWeighted] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFilter, setSearchFilter] = useState<'all' | 'active' | 'ended' | 'finalized'>('all');
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   
   const createTransaction = useTransaction();
   const voteTransaction = useTransaction();
@@ -334,6 +337,70 @@ export default function VotingPlatform({
       }
     }
   };
+
+  // Filter proposals based on search query and filter
+  const filteredProposals = useMemo(() => {
+    let filtered = [...proposals];
+
+    // Apply status filter
+    if (searchFilter !== 'all') {
+      filtered = filtered.filter((proposal) => {
+        const now = BigInt(Math.floor(Date.now() / 1000));
+        const isEnded = proposal.endTime <= now || proposal.finalized;
+        const isActive = !isEnded && proposal.status === 0;
+        const isFinalized = proposal.finalized;
+
+        switch (searchFilter) {
+          case 'active':
+            return isActive;
+          case 'ended':
+            return isEnded && !isFinalized;
+          case 'finalized':
+            return isFinalized;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((proposal) => {
+        // Search in title
+        if (proposal.title.toLowerCase().includes(query)) return true;
+        
+        // Search in description
+        if (proposal.description.toLowerCase().includes(query)) return true;
+        
+        // Search in creator address
+        if (proposal.creator.toLowerCase().includes(query)) return true;
+        
+        // Search in proposal ID
+        if (proposal.id.toString().includes(query)) return true;
+        
+        // Search in vote count
+        if (proposal.voteCount.toString().includes(query)) return true;
+        
+        // Search in total weight
+        if (proposal.totalWeight.toString().includes(query)) return true;
+        
+        // Search in status text
+        const now = BigInt(Math.floor(Date.now() / 1000));
+        const isEnded = proposal.endTime <= now || proposal.finalized;
+        const statusText = proposal.finalized 
+          ? (language === 'zh' ? '已结算' : 'Finalized')
+          : isEnded 
+          ? (language === 'zh' ? '已结束' : 'Ended')
+          : (language === 'zh' ? '进行中' : 'Active');
+        if (statusText.toLowerCase().includes(query)) return true;
+        
+        return false;
+      });
+    }
+
+    return filtered;
+  }, [proposals, searchQuery, searchFilter, language]);
 
   const handleCreateProposal = async () => {
     if (!provider || !contractAddress || !proposalTitle || !proposalDescription) {
@@ -627,7 +694,7 @@ export default function VotingPlatform({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            📋 {t.voting.proposalList} ({proposals.length})
+            📋 {t.voting.proposalList} ({filteredProposals.length}/{proposals.length})
           </h2>
           <button
             onClick={loadProposals}
@@ -637,7 +704,110 @@ export default function VotingPlatform({
           </button>
         </div>
 
-        {proposals.length === 0 ? (
+        {/* Search and Filter Section */}
+        {proposals.length > 0 && (
+          <div className="bg-gradient-to-br from-zama-950/40 via-zama-900/20 to-zama-950/40 dark:from-zama-950/60 dark:via-zama-900/40 dark:to-zama-950/60 rounded-xl shadow-lg border border-zama-500/20 dark:border-zama-500/30 p-4 backdrop-blur-sm">
+            <div className="space-y-4">
+              {/* Search Input */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t.voting.searchPlaceholder || 'Search by title, description, creator, ID, vote count...'}
+                  className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-zama-500 focus:border-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mr-2">
+                  {t.voting.filterByStatus || 'Filter:'}
+                </span>
+                {(['all', 'active', 'ended', 'finalized'] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setSearchFilter(filter)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                      searchFilter === filter
+                        ? 'bg-zama-500 text-black shadow-lg shadow-zama-500/50'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700'
+                    }`}
+                  >
+                    {filter === 'all' && (t.voting.filterAll || 'All')}
+                    {filter === 'active' && (t.voting.filterActive || 'Active')}
+                    {filter === 'ended' && (t.voting.filterEnded || 'Ended')}
+                    {filter === 'finalized' && (t.voting.filterFinalized || 'Finalized')}
+                  </button>
+                ))}
+              </div>
+
+              {/* Advanced Search Toggle */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                  className="text-sm text-zama-500 dark:text-zama-400 hover:text-zama-600 dark:hover:text-zama-300 flex items-center gap-2"
+                >
+                  <svg className={`h-4 w-4 transition-transform ${showAdvancedSearch ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  {t.voting.advancedSearch || 'Advanced Search'}
+                </button>
+                {searchQuery && (
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {t.voting.searchResults || 'Found'}: {filteredProposals.length} {t.voting.proposals || 'proposals'}
+                  </span>
+                )}
+              </div>
+
+              {/* Advanced Search Info */}
+              {showAdvancedSearch && (
+                <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
+                    <strong>{t.voting.searchTips || 'Search Tips'}:</strong>
+                  </p>
+                  <ul className="text-xs text-zinc-500 dark:text-zinc-500 space-y-1 list-disc list-inside">
+                    <li>{t.voting.searchTip1 || 'Search by proposal title or description'}</li>
+                    <li>{t.voting.searchTip2 || 'Search by creator address (full or partial)'}</li>
+                    <li>{t.voting.searchTip3 || 'Search by proposal ID or vote count'}</li>
+                    <li>{t.voting.searchTip4 || 'Search by status: Active, Ended, or Finalized'}</li>
+                    <li>{t.voting.searchTip5 || 'Combine filters for precise results'}</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {filteredProposals.length === 0 && proposals.length > 0 ? (
+          <div className="bg-gradient-to-br from-zama-950/40 via-zama-900/20 to-zama-950/40 dark:from-zama-950/60 dark:via-zama-900/40 dark:to-zama-950/60 rounded-xl shadow-lg border border-zama-500/20 dark:border-zama-500/30 p-12 text-center backdrop-blur-sm">
+            <p className="text-zinc-600 dark:text-zinc-400 mb-4">{t.voting.noSearchResults || 'No proposals match your search criteria'}</p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSearchFilter('all');
+              }}
+              className="px-6 py-3 bg-zama-500 text-black rounded-lg font-bold hover:bg-zama-400 shadow-lg shadow-zama-500/50"
+            >
+              {t.voting.clearSearch || 'Clear Search'}
+            </button>
+          </div>
+        ) : filteredProposals.length === 0 ? (
           <div className="bg-gradient-to-br from-zama-950/40 via-zama-900/20 to-zama-950/40 dark:from-zama-950/60 dark:via-zama-900/40 dark:to-zama-950/60 rounded-xl shadow-lg border border-zama-500/20 dark:border-zama-500/30 p-12 text-center backdrop-blur-sm">
             {!contractAddress ? (
               <>
@@ -672,7 +842,7 @@ export default function VotingPlatform({
             )}
           </div>
         ) : (
-          proposals.map((proposal) => (
+          filteredProposals.map((proposal) => (
             <ProposalCard
               key={proposal.id}
               proposal={proposal}
@@ -682,6 +852,7 @@ export default function VotingPlatform({
               onVote={handleVote}
               onEndEarly={handleEndProposalEarly}
               onRefresh={loadProposals}
+              searchQuery={searchQuery}
             />
           ))
         )}
@@ -693,6 +864,28 @@ export default function VotingPlatform({
 /**
  * 提案卡片组件
  */
+// Helper function to highlight search terms
+function highlightText(text: string, query: string): JSX.Element {
+  if (!query.trim()) {
+    return <>{text}</>;
+  }
+
+  const parts = text.split(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={index} className="bg-zama-500/30 dark:bg-zama-500/40 text-zinc-900 dark:text-zinc-100 px-1 rounded">
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
 function ProposalCard({
   proposal,
   provider,
@@ -701,6 +894,7 @@ function ProposalCard({
   onVote,
   onEndEarly,
   onRefresh,
+  searchQuery = '',
 }: {
   proposal: Proposal;
   provider: BrowserProvider | null;
@@ -709,6 +903,7 @@ function ProposalCard({
   onVote: (proposalId: number, optionIndex: number) => void;
   onEndEarly: (proposalId: number) => void;
   onRefresh: () => void;
+  searchQuery?: string;
 }) {
   const { t } = useLanguage();
   const [hasVoted, setHasVoted] = useState(false);
@@ -847,7 +1042,7 @@ function ProposalCard({
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              {proposal.title}
+              {highlightText(proposal.title, searchQuery)}
             </h3>
             {isCreator && (
               <span className="px-2 py-0.5 text-xs bg-zama-500/30 dark:bg-zama-500/40 text-black dark:text-black rounded font-semibold">
@@ -856,12 +1051,15 @@ function ProposalCard({
             )}
           </div>
           <p className="text-zinc-600 dark:text-zinc-400 mb-3">
-            {proposal.description}
+            {highlightText(proposal.description, searchQuery)}
           </p>
           <div className="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-500">
             <span>📊 {proposal.voteCount.toString()} {t.voting.voteCount}</span>
             <span>⏰ {new Date(endTimeSeconds * 1000).toLocaleString()}</span>
             {proposal.totalWeight > proposal.voteCount && <span>⚖️ {t.voting.useWeighted}</span>}
+            <span className="text-xs">
+              👤 {highlightText(proposal.creator.slice(0, 6) + '...' + proposal.creator.slice(-4), searchQuery)}
+            </span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">

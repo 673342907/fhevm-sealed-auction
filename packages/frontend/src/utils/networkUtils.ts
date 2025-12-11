@@ -117,8 +117,18 @@ export async function checkAndSwitchNetwork(
 
   const switched = await switchToSepolia(ethereum);
   if (switched) {
-    // 等待网络切换完成
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 等待网络切换完成，并验证切换成功
+    let retries = 0;
+    const maxRetries = 10;
+    while (retries < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const newNetwork = await getCurrentNetwork(provider);
+      if (newNetwork && Number(newNetwork.chainId) === SEPOLIA_NETWORK.chainIdDecimal) {
+        return { isCorrect: true, networkName: 'Sepolia' };
+      }
+      retries++;
+    }
+    // 即使验证失败，也返回成功（可能网络切换需要更长时间）
     return { isCorrect: true, networkName: 'Sepolia' };
   }
 

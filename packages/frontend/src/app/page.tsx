@@ -55,33 +55,27 @@ export default function Home() {
   }, []);
 
   const checkWalletConnection = async () => {
-    // Check for any connected wallet
+    // Check for any connected wallet (passive check, don't trigger connection)
     const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : null;
     if (!ethereum) {
       return;
     }
 
     try {
-      // Handle multiple providers (EIP-6963)
-      const providers = Array.isArray(ethereum.providers) ? ethereum.providers : [ethereum];
+      // Use eth_accounts which doesn't trigger connection request
+      // This only returns accounts that are already connected
+      const accounts = await ethereum.request({ method: 'eth_accounts' });
       
-      for (const provider of providers) {
-        try {
-          const browserProvider = new BrowserProvider(provider);
-          const accounts = await browserProvider.listAccounts();
-          if (accounts.length > 0) {
-            setAccount(accounts[0].address);
-            setProvider(browserProvider);
-            await initializeFhevm();
-            return; // Found connected wallet, exit
-          }
-        } catch (err) {
-          // Continue to next provider
-          continue;
-        }
+      if (accounts && accounts.length > 0) {
+        // Found connected account, set up provider
+        const provider = new BrowserProvider(ethereum);
+        setAccount(accounts[0]);
+        setProvider(provider);
+        await initializeFhevm();
       }
     } catch (error: any) {
-      console.error('Error checking wallet:', error);
+      // Silently fail, don't show error on page load
+      console.log('No wallet connected:', error);
     }
   };
 
@@ -115,28 +109,45 @@ export default function Home() {
 
   const handleWalletSelect = async (wallet: WalletInfo) => {
     try {
-      const provider = new BrowserProvider(wallet.provider);
-      await provider.send('eth_requestAccounts', []);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
+      // First, request account connection
+      await wallet.provider.request({ method: 'eth_requestAccounts' });
       
-      setAccount(address);
-      setProvider(provider);
-      
-      // Check network after connection
+      // Check network before creating provider
       const { getCurrentNetwork, checkAndSwitchNetwork } = await import('@/utils/networkUtils');
-      const currentNetwork = await getCurrentNetwork(provider);
+      let initialProvider = new BrowserProvider(wallet.provider);
+      const currentNetwork = await getCurrentNetwork(initialProvider);
+      
+      // If network is wrong, switch it first
       if (currentNetwork && Number(currentNetwork.chainId) !== 11155111) {
-        const networkResult = await checkAndSwitchNetwork(provider, wallet.provider);
+        const networkResult = await checkAndSwitchNetwork(initialProvider, wallet.provider);
         if (!networkResult.isCorrect) {
           showNotification('warning', t.wallet.wrongNetwork || `Please switch to Sepolia testnet (Chain ID: 11155111). Current network: ${currentNetwork.name} (${currentNetwork.chainId})`);
+          // Still allow connection even if network switch failed
         } else {
           showNotification('info', t.wallet.networkSwitched || 'Switched to Sepolia testnet');
+          // Wait for network change to propagate
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          // Recreate provider after network switch
+          initialProvider = new BrowserProvider(wallet.provider);
         }
       }
       
-      await initializeFhevm();
-      showNotification('success', t.wallet.walletConnected || 'Wallet connected');
+      // Now get the account and set up provider
+      const signer = await initialProvider.getSigner();
+      const address = await signer.getAddress();
+      
+      setAccount(address);
+      setProvider(initialProvider);
+      
+      // Initialize FHEVM after everything is set up
+      try {
+        await initializeFhevm();
+        showNotification('success', t.wallet.walletConnected || 'Wallet connected');
+      } catch (fhevmError) {
+        // FHEVM initialization failure is not critical
+        console.warn('FHEVM initialization failed, but wallet is connected:', fhevmError);
+        showNotification('success', t.wallet.walletConnected || 'Wallet connected');
+      }
     } catch (error: any) {
       if (error.code === 4001) {
         showNotification('error', t.wallet.userRejected || 'User rejected connection');
